@@ -121,7 +121,7 @@ thread_start (void)
 void
 thread_wake (struct thread *t, void* aux UNUSED)
 {
-  if (t->status != THREAD_BLOCKED &&
+  if (t->status == THREAD_BLOCKED &&
     timer_ticks () >= t->wake_tick) thread_unblock(t);
 }
 
@@ -146,7 +146,6 @@ thread_tick (void)
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
 
-  thread_foreach(thread_wake, 0);
 }
 
 
