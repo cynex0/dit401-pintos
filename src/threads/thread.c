@@ -117,6 +117,13 @@ thread_start (void)
   sema_down (&idle_started);
 }
 
+void
+thread_wake (struct thread *t, void* aux UNUSED)
+{
+  if (t->status != THREAD_BLOCKED) return;
+  if (timer_ticks () >= t->wake_tick) thread_unblock(t);
+}
+
 /* Called by the timer interrupt handler at each timer tick.
    Thus, this function runs in an external interrupt context. */
 void
@@ -137,8 +144,16 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+<<<<<<< HEAD
 }
 
+=======
+
+  thread_foreach(thread_wake, 0);
+}
+
+
+>>>>>>> 0d08c07 (inital attempt)
 /* Prints thread statistics. */
 void
 thread_print_stats (void) 
