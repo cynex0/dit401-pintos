@@ -121,8 +121,8 @@ thread_start (void)
 void
 thread_wake (struct thread *t, void* aux UNUSED)
 {
-  if (t->status != THREAD_BLOCKED) return;
-  if (timer_ticks () >= t->wake_tick) thread_unblock(t);
+  if (t->status != THREAD_BLOCKED &&
+    timer_ticks () >= t->wake_tick) thread_unblock(t);
 }
 
 /* Called by the timer interrupt handler at each timer tick.
