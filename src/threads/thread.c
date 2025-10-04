@@ -11,6 +11,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "devices/timer.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -144,16 +145,11 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
-<<<<<<< HEAD
-}
-
-=======
 
   thread_foreach(thread_wake, 0);
 }
 
 
->>>>>>> 0d08c07 (inital attempt)
 /* Prints thread statistics. */
 void
 thread_print_stats (void) 
