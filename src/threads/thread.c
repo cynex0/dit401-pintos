@@ -1,4 +1,5 @@
 #include "threads/thread.h"
+#include <cstdint>
 #include <debug.h>
 #include <stddef.h>
 #include <random.h>
@@ -119,10 +120,11 @@ thread_start (void)
 }
 
 void
-thread_wake (struct thread *t, void* aux UNUSED)
+thread_wake (struct thread *t, void* aux)
 {
-  if (t->status == THREAD_BLOCKED &&
-    timer_ticks () >= t->wake_tick) thread_unblock(t);
+  int64_t now = *(int64_t *) aux;
+  if (t->status == THREAD_BLOCKED && now >= t->wake_tick) 
+    thread_unblock(t);
 }
 
 /* Called by the timer interrupt handler at each timer tick.
