@@ -1,5 +1,5 @@
 #include "threads/thread.h"
-#include <cstdint>
+#include <inttypes.h>
 #include <debug.h>
 #include <stddef.h>
 #include <random.h>
