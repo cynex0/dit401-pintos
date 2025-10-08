@@ -119,12 +119,18 @@ thread_start (void)
   sema_down (&idle_started);
 }
 
+/* Called by the timer interrupt handler at each timer tick, for each thread.
+   Unblocks (wakes) sleeping thread if its sleep duration elapsed. */
 void
 thread_wake (struct thread *t, void* aux)
 {
-  int64_t now = *(int64_t *) aux;
+  ASSERT (is_thread (t)); // sanity check
+
+  // current tick passed in from the INT handler for consistency
+  int64_t now = *(int64_t *) aux; 
+
   if (t->status == THREAD_BLOCKED && now >= t->wake_tick) 
-    thread_unblock(t);
+    thread_unblock (t);
 }
 
 /* Called by the timer interrupt handler at each timer tick.
