@@ -129,8 +129,10 @@ thread_wake (struct thread *t, void* aux)
   // current tick passed in from the INT handler for consistency
   int64_t now = *(int64_t *) aux; 
 
-  if (t->status == THREAD_BLOCKED && now >= t->wake_tick) 
+  if (t->status == THREAD_BLOCKED && t->wake_tick > 0 && now >= t->wake_tick) {
     thread_unblock (t);
+    t->wake_tick = -1;
+  }
 }
 
 /* Called by the timer interrupt handler at each timer tick.
@@ -486,6 +488,7 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
+  t->wake_tick = -1;
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
 }
