@@ -83,23 +83,24 @@ typedef int tid_t;
 struct thread
   {
     /* Owned by thread.c. */
-    tid_t tid;                          /* Thread identifier. */
-    enum thread_status status;          /* Thread state. */
-    char name[16];                      /* Name (for debugging purposes). */
-    uint8_t *stack;                     /* Saved stack pointer. */
-    int priority;                       /* Priority. */
-    struct list_elem allelem;           /* List element for all threads list. */
+    tid_t tid;                    /* Thread identifier. */
+    enum thread_status status;    /* Thread state. */
+    char name[16];                /* Name (for debugging purposes). */
+    uint8_t *stack;               /* Saved stack pointer. */
+    int priority;                 /* Priority. */
+    struct list_elem allelem;     /* List element for all threads list. */
+    int64_t wake_tick;            /* Timer tick to wake at (set if sleeping) */
 
     /* Shared between thread.c and synch.c. */
-    struct list_elem elem;              /* List element. */
+    struct list_elem elem;        /* List element. */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
-    uint32_t *pagedir;                  /* Page directory. */
+    uint32_t *pagedir;            /* Page directory. */
 #endif
 
     /* Owned by thread.c. */
-    unsigned magic;                     /* Detects stack overflow. */
+    unsigned magic;               /* Detects stack overflow. */
   };
 
 /* If false (default), use round-robin scheduler.
@@ -118,6 +119,7 @@ tid_t thread_create (const char *name, int priority, thread_func *, void *);
 
 void thread_block (void);
 void thread_unblock (struct thread *);
+void thread_wake (struct thread*, void*);
 
 struct thread *thread_current (void);
 tid_t thread_tid (void);

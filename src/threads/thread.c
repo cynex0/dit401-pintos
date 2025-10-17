@@ -1,4 +1,5 @@
 #include "threads/thread.h"
+#include <inttypes.h>
 #include <debug.h>
 #include <stddef.h>
 #include <random.h>
@@ -11,6 +12,7 @@
 #include "threads/switch.h"
 #include "threads/synch.h"
 #include "threads/vaddr.h"
+#include "devices/timer.h"
 #ifdef USERPROG
 #include "userprog/process.h"
 #endif
@@ -117,6 +119,22 @@ thread_start (void)
   sema_down (&idle_started);
 }
 
+/* Called by the timer interrupt handler at each timer tick, for each thread.
+   Unblocks (wakes) sleeping thread if its sleep duration elapsed. */
+void
+thread_wake (struct thread *t, void* aux)
+{
+  ASSERT (is_thread (t)); // sanity check
+
+  // current tick passed in from the INT handler for consistency
+  int64_t now = *(int64_t *) aux; 
+
+  if (t->status == THREAD_BLOCKED && t->wake_tick > 0 && now >= t->wake_tick) {
+    thread_unblock (t);
+    t->wake_tick = -1;
+  }
+}
+
 /* Called by the timer interrupt handler at each timer tick.
    Thus, this function runs in an external interrupt context. */
 void
@@ -137,7 +155,9 @@ thread_tick (void)
   /* Enforce preemption. */
   if (++thread_ticks >= TIME_SLICE)
     intr_yield_on_return ();
+
 }
+
 
 /* Prints thread statistics. */
 void
@@ -468,6 +488,7 @@ init_thread (struct thread *t, const char *name, int priority)
   strlcpy (t->name, name, sizeof t->name);
   t->stack = (uint8_t *) t + PGSIZE;
   t->priority = priority;
+  t->wake_tick = -1;
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
 }
