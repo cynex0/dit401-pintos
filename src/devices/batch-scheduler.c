@@ -245,7 +245,10 @@ void release_slot(const task_t *task) {
 
   current_task_n--;
 
-  if (waiting_count[PRIORITY][current_dir] > 0 || waiting_count[NORMAL][current_dir] > 0) {
+  if (
+    (current_task_n > 0) &&
+    (waiting_count[PRIORITY][current_dir] > 0 || waiting_count[NORMAL][current_dir] > 0)
+  ){
     // if someone is waiting in the same direction
     cond_signal(&can_use_bus[current_dir], &bus_lock); // signal one task in the same direction
   } else if (current_task_n == 0) {
