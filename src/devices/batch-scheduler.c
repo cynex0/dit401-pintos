@@ -16,6 +16,7 @@
  *  Fill-in your code after the TODO comments
  */
 
+#include <exception>
 #include <stdio.h>
 #include <string.h>
 
@@ -236,7 +237,7 @@ void transfer_data(const task_t *task) {
   timer_sleep(task->transfer_duration);
 }
 
-void release_slot(const task_t *task UNUSED) {
+void release_slot(const task_t *task) {
 
   /* TODO: Release the slot, think about the actions you need to perform:
    *       - Do you need to notify any waiting task?
@@ -246,24 +247,13 @@ void release_slot(const task_t *task UNUSED) {
 
   current_task_n--;
 
-  if (current_task_n > 0) {
-    if (waiting_count[PRIORITY][current_dir] > 0 ||
-        waiting_count[NORMAL][current_dir] > 0)
-      cond_signal(&can_use_bus[current_dir], &bus_lock);
-  } else {
-    if (waiting_count[PRIORITY][SEND] > 0) {
-      current_dir = SEND;
-      cond_broadcast(&can_use_bus[SEND], &bus_lock);
-    } else if (waiting_count[PRIORITY][RECEIVE] > 0) {
-      current_dir = RECEIVE;
-      cond_broadcast(&can_use_bus[RECEIVE], &bus_lock);
-    } else if (waiting_count[NORMAL][SEND] > 0) {
-      current_dir = SEND;
-      cond_broadcast(&can_use_bus[SEND], &bus_lock);
-    } else if (waiting_count[NORMAL][RECEIVE] > 0) {
-      current_dir = RECEIVE;
-      cond_broadcast(&can_use_bus[RECEIVE], &bus_lock);
-    }
+  if (waiting_count[PRIORITY][current_dir] > 0 || waiting_count[NORMAL][current_dir] > 0) {
+    // if someone is waiting in the same direction
+    cond_signal(&can_use_bus[current_dir], &bus_lock); // signal one task in the same direction
+  } else if (current_task_n == 0) {
+    // if bus empty
+    // signal all in the opposite direction
+    cond_broadcast(&can_use_bus[other_direction(task->direction)], &bus_lock);
   }
 
   lock_release(&bus_lock);
