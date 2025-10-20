@@ -58,7 +58,7 @@ typedef struct {
 
 static struct lock bus_lock;
 static struct condition can_use_bus;
-static enum direction_t current_dir;
+static direction_t current_dir;
 static int current_task_n;
 
 static int waiting_count[NUM_OF_PRIORITIES][NUM_OF_DIRECTIONS];
@@ -99,7 +99,7 @@ void init_bus (void) {
 
   /* TODO: Initialize global/static variables,
      e.g. your condition variables, locks, counters etc */
-  lock_init (&scheduler_lock);
+  lock_init (&bus_lock);
   cond_init (&can_use_bus);
 
   current_task_n = 0;
@@ -225,7 +225,7 @@ void get_slot (const task_t *task) {
       ((waiting_count[PRIORITY][other_direction(task->direction)] > 0) ||
        (waiting_count[PRIORITY][task->direction] > 0)))
   ) {
-    cond_wait(&condition, &bus_lock);
+    cond_wait(&can_use_bus, &bus_lock);
   }
   waiting_count[task->priority][task->direction]--;
 
