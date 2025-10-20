@@ -221,7 +221,7 @@ void get_slot (const task_t *task) {
       ((waiting_count[PRIORITY][other_direction(task->direction)] > 0) ||
        (waiting_count[PRIORITY][task->direction] > 0)))
   ) {
-    cond_wait (&can_use_bus[current_dir], &bus_lock);
+    cond_wait (&can_use_bus[task->direction], &bus_lock);
   }
   waiting_count[task->priority][task->direction]--;
 
