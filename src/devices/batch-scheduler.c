@@ -57,7 +57,7 @@ typedef struct {
 } task_t;
 
 static struct lock bus_lock;
-static struct condition can_use_bus[NUM_OF_PRIORITIES];
+static struct condition can_use_bus[NUM_OF_DIRECTIONS];
 static direction_t current_dir;
 static int current_task_n;
 
@@ -91,8 +91,8 @@ void init_bus (void) {
      e.g. your condition variables, locks, counters etc */
   lock_init (&bus_lock);
   
-  for (int p = 0; p < NUM_OF_PRIORITIES; p++) {
-    cond_init (&can_use_bus[p]);
+  for (int d = 0; d < NUM_OF_DIRECTIONS; d++) {
+    cond_init (&can_use_bus[d]);
   }
 
   current_task_n = 0;
