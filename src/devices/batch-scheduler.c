@@ -247,7 +247,8 @@ void release_slot (const task_t *task UNUSED) {
   if (waiting_count[PRIORITY][current_dir] > 0 || waiting_count[NORMAL][current_dir] > 0) {
     cond_signal (&can_use_bus[current_dir], &bus_lock);
   } else if (current_task_n == 0) {
-    cond_broadcast (&can_use_bus[other_direction(current_dir)], &bus_lock);
+    current_dir = other_direction(current_dir);
+    cond_broadcast (&can_use_bus[current_dir], &bus_lock);
   }
 
   lock_release(&bus_lock);
