@@ -57,7 +57,7 @@ typedef struct {
 } task_t;
 
 static struct lock bus_lock;
-static struct condition can_use_bus;
+static struct condition can_use_bus[NUM_OF_PRIORITIES];
 static direction_t current_dir;
 static int current_task_n;
 
@@ -83,16 +83,6 @@ static void transfer_data (const task_t *task);
 /* Releases the slot */
 static void release_slot (const task_t *task);
 
-static int waiting_count_total() {
-  int count = 0;
-  for (int p = 0; p < NUM_OF_DIRECTIONS; p++) {
-    for (int d = 0; d < NUM_OF_DIRECTIONS; d++) {
-      count += waiting_count[p][d];
-    }
-  }
-  return count;
-}
-
 void init_bus (void) {
 
   random_init ((unsigned int)123456789);
@@ -100,11 +90,14 @@ void init_bus (void) {
   /* TODO: Initialize global/static variables,
      e.g. your condition variables, locks, counters etc */
   lock_init (&bus_lock);
-  cond_init (&can_use_bus);
+  
+  for (int p = 0; p < NUM_OF_PRIORITIES; p++) {
+    cond_init (&can_use_bus[p]);
+  }
 
   current_task_n = 0;
   current_dir = SEND;
-  for (int p = 0; p < NUM_OF_DIRECTIONS; p++) {
+  for (int p = 0; p < NUM_OF_PRIORITIES; p++) {
     for (int d = 0; d < NUM_OF_DIRECTIONS; d++) {
       waiting_count[p][d] = 0;
     }
@@ -219,19 +212,22 @@ void get_slot (const task_t *task) {
 
   waiting_count[task->priority][task->direction]++;
   while ( 
+    // bus full
     (current_task_n >= BUS_CAPACITY) ||
+    // OR not full AND task direction not the same as bus
     (current_task_n > 0 && current_dir != task->direction) ||
+    // OR task is not priority AND there is a priority task waiting in any direction
     (task->priority != PRIORITY &&
       ((waiting_count[PRIORITY][other_direction(task->direction)] > 0) ||
        (waiting_count[PRIORITY][task->direction] > 0)))
   ) {
-    cond_wait(&can_use_bus, &bus_lock);
+    cond_wait (&can_use_bus[current_dir], &bus_lock);
   }
   waiting_count[task->priority][task->direction]--;
 
   current_task_n++;
   current_dir = task->direction;
-  lock_release(&bus_lock);
+  lock_release (&bus_lock);
 }
 
 void transfer_data (const task_t *task) {
@@ -239,7 +235,7 @@ void transfer_data (const task_t *task) {
   timer_sleep (task->transfer_duration);
 }
 
-void release_slot (const task_t *task) {
+void release_slot (const task_t *task UNUSED) {
 
   /* TODO: Release the slot, think about the actions you need to perform:
    *       - Do you need to notify any waiting task?
@@ -248,10 +244,10 @@ void release_slot (const task_t *task) {
   lock_acquire(&bus_lock);
 
   current_task_n--;
-  if (current_task_n == 0) {
-    cond_broadcast(&can_use_bus, &bus_lock);
-  } else if (waiting_count_total() > 0) {
-    cond_signal(&can_use_bus, &bus_lock);
+  if (waiting_count[PRIORITY][current_dir] > 0 || waiting_count[NORMAL][current_dir] > 0) {
+    cond_signal (&can_use_bus[current_dir], &bus_lock);
+  } else if (current_task_n == 0) {
+    cond_broadcast (&can_use_bus[other_direction(current_dir)], &bus_lock);
   }
 
   lock_release(&bus_lock);
