@@ -16,10 +16,8 @@
  *  Fill-in your code after the TODO comments
  */
 
-#include <exception>
 #include <stdio.h>
 #include <string.h>
-
 #include "tests/threads/tests.h"
 #include "threads/malloc.h"
 #include "threads/thread.h"
